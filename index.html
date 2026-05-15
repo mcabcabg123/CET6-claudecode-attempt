@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CET-6 词汇测试</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh; display: flex; justify-content: center; align-items: center;
+  color: #e0e0e0;
+}
+.container {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px);
+  border-radius: 20px; padding: 40px;
+  width: 90%; max-width: 600px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+h1 { text-align: center; font-size: 2em; margin-bottom: 10px; color: #fff; }
+.subtitle { text-align: center; color: #89a4c7; margin-bottom: 35px; font-size: 0.95em; }
+
+/* Timer */
+.timer-bar {
+  width: 100%; height: 6px; background: rgba(255,255,255,0.15);
+  border-radius: 3px; margin-bottom: 25px; overflow: hidden;
+}
+.timer-fill {
+  height: 100%; border-radius: 3px; transition: width 0.1s linear, background 0.5s;
+  background: #4caf84;
+}
+.timer-fill.warning { background: #f0a040; }
+.timer-fill.danger { background: #e05050; }
+.timer-text { text-align: center; font-size: 1.3em; margin-bottom: 8px; color: #89a4c7; }
+
+/* Stats */
+.stats { display: flex; justify-content: space-around; margin-bottom: 20px; font-size: 0.9em; color: #89a4c7; }
+.stats span { background: rgba(255,255,255,0.08); padding: 6px 16px; border-radius: 20px; }
+
+/* Question */
+.question-label { font-size: 0.85em; color: #7b93b0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+.question-word { font-size: 2.5em; text-align: center; color: #fff; margin: 15px 0 25px; font-weight: 700; word-break: break-all; }
+.question-chinese { font-size: 1.5em; text-align: center; color: #fff; margin: 15px 0 25px; }
+
+/* Options */
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option-btn {
+  padding: 14px 20px; border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05); color: #e0e0e0;
+  border-radius: 12px; font-size: 1.05em; cursor: pointer;
+  transition: all 0.2s; text-align: left;
+}
+.option-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); transform: translateY(-1px); }
+.option-btn:disabled { pointer-events: none; }
+.option-btn.correct { background: rgba(76,175,132,0.3); border-color: #4caf84; }
+.option-btn.wrong { background: rgba(224,80,80,0.3); border-color: #e05050; }
+
+/* Fill-in-the-blank */
+.fill-input {
+  width: 100%; padding: 14px; font-size: 1.5em; text-align: center;
+  border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08);
+  color: #fff; border-radius: 12px; letter-spacing: 4px; outline: none;
+}
+.fill-input:focus { border-color: #4caf84; }
+.fill-word { font-size: 2.2em; text-align: center; letter-spacing: 5px; margin: 15px 0 20px; color: #fff; font-weight: 700; }
+.hint-text { text-align: center; color: #89a4c7; font-size: 0.85em; margin-top: 8px; }
+
+/* Feedback */
+.feedback { text-align: center; margin: 20px 0; padding: 15px; border-radius: 10px; display: none; }
+.feedback.show { display: block; }
+.feedback.correct { background: rgba(76,175,132,0.15); }
+.feedback.wrong { background: rgba(224,80,80,0.15); }
+.feedback-icon { font-size: 2em; margin-bottom: 5px; }
+.correct-answer { font-size: 1.2em; margin-top: 8px; color: #f0a040; }
+
+/* Buttons */
+.button-row { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
+.btn {
+  padding: 12px 30px; border: none; border-radius: 25px; font-size: 1em; cursor: pointer;
+  transition: all 0.2s; font-weight: 600;
+}
+.btn-primary { background: #4caf84; color: #fff; }
+.btn-primary:hover { background: #3d9a6e; transform: translateY(-1px); }
+.btn-secondary { background: rgba(255,255,255,0.1); color: #e0e0e0; border: 1px solid rgba(255,255,255,0.2); }
+.btn-secondary:hover { background: rgba(255,255,255,0.2); }
+.btn-danger { background: #e05050; color: #fff; }
+.btn-danger:hover { background: #c04040; }
+
+/* Mode buttons on main page */
+.mode-buttons { display: flex; flex-direction: column; gap: 15px; margin: 30px 0; }
+.mode-btn {
+  padding: 20px; border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05); color: #fff;
+  border-radius: 15px; font-size: 1.2em; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.mode-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+.mode-btn .icon { font-size: 1.8em; display: block; margin-bottom: 8px; }
+.mode-btn .desc { font-size: 0.8em; color: #89a4c7; margin-top: 5px; }
+
+/* Question counter */
+.q-counter { text-align: center; color: #89a4c7; font-size: 0.85em; margin-bottom: 20px; }
+
+/* Animation */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.3s ease-out; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+.shake { animation: shake 0.3s ease-out; }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .container { padding: 25px 18px; }
+  .question-word { font-size: 1.8em; }
+  .option-btn { padding: 12px 15px; font-size: 0.95em; }
+  h1 { font-size: 1.5em; }
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+
+  <!-- MAIN PAGE -->
+  <div id="main-page">
+    <h1>CET-6 词汇测试</h1>
+    <p class="subtitle">大学英语六级 · 全表含音标 · 5523词</p>
+    <div class="mode-buttons">
+      <button class="mode-btn" onclick="startMode(1)">
+        <span class="icon">A→中</span>
+        <span>英译中</span>
+        <span class="desc">看英文，选中文释义</span>
+      </button>
+      <button class="mode-btn" onclick="startMode(2)">
+        <span class="icon">中→A</span>
+        <span>中译英</span>
+        <span class="desc">看中文，选英文单词</span>
+      </button>
+      <button class="mode-btn" onclick="startMode(3)">
+        <span class="icon">✏️</span>
+        <span>单词填空</span>
+        <span class="desc">看中文，补全英文单词</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- QUIZ PAGE -->
+  <div id="quiz-page" style="display:none;">
+    <div class="q-counter" id="q-counter"></div>
+    <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+    <div class="timer-text" id="timer-text">10s</div>
+    <div class="stats">
+      <span id="stat-accuracy">正确率: 0%</span>
+      <span id="stat-correct">正确: 0</span>
+      <span id="stat-total">总题: 0</span>
+    </div>
+
+    <div class="question-label" id="question-label"></div>
+    <div class="question-word fade-in" id="question-word" style="display:none;"></div>
+    <div class="question-chinese fade-in" id="question-chinese" style="display:none;"></div>
+    <div class="fill-word fade-in" id="fill-word" style="display:none;"></div>
+    <div class="hint-text" id="fill-hint" style="display:none;"></div>
+
+    <div class="options" id="options-container"></div>
+    <div id="fill-container" style="display:none;">
+      <input type="text" class="fill-input" id="fill-input" placeholder="输入完整单词..." autocomplete="off">
+      <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="checkFillAnswer()">确认</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="button-row">
+      <button class="btn btn-secondary" onclick="goToMain()">返回主页</button>
+      <button class="btn btn-primary" id="btn-next" style="display:none;" onclick="nextQuestion()">下一题 →</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="word_bank.js"></script>
+<script>
+// ========== STATE ==========
+let mode = 0;
+let currentWord = null;
+let questionIndex = 0;
+let correctCount = 0;
+let totalCount = 0;
+let timerSeconds = 0;
+let timerInterval = null;
+let answered = false;
+let questionQueue = []; // Queue of {wordIndex, retryOf?}
+let correctOptionBtn = null; // Reference to the correct answer button
+let autoAdvanceTimeout = null; // Handle for auto-advance after correct answer
+
+// ========== HELPERS ==========
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getRandomOptions(correctIdx, count, mode) {
+  // Generate count-1 random WRONG options plus the correct one
+  const wrongs = [];
+  const correct = correctIdx;
+  while (wrongs.length < count - 1) {
+    const r = Math.floor(Math.random() * WORD_BANK.length);
+    if (r !== correct && !wrongs.includes(r)) {
+      wrongs.push(r);
+    }
+  }
+  const opts = [correct, ...wrongs];
+  return shuffle(opts);
+}
+
+function generateBlankWord(word) {
+  // Blank out ~40% of letters (min 2), never blank first letter for easier context
+  const len = word.length;
+  if (len <= 3) {
+    // For short words, blank 1 letter
+    const pos = 1 + Math.floor(Math.random() * (len - 1));
+    const blanked = word.split('');
+    blanked[pos] = '_';
+    return { display: blanked.join(''), blanks: [pos], answer: word };
+  }
+
+  const blankCount = Math.max(2, Math.floor(len * 0.4));
+  const positions = [];
+  const available = [];
+  for (let i = 1; i < len; i++) { // Start from 1 to keep first letter
+    // Don't blank hyphens or spaces
+    if (word[i] !== '-' && word[i] !== ' ') {
+      available.push(i);
+    }
+  }
+
+  // Shuffle available positions and pick blankCount
+  const shuffled = shuffle(available);
+  const chosen = shuffled.slice(0, Math.min(blankCount, available.length)).sort((a, b) => a - b);
+
+  const display = word.split('');
+  for (const pos of chosen) {
+    display[pos] = '_';
+  }
+
+  return { display: display.join(''), blanks: chosen, answer: word };
+}
+
+// ========== TIMER ==========
+function startTimer() {
+  clearInterval(timerInterval);
+  timerSeconds = 10;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerSeconds -= 0.1;
+    if (timerSeconds <= 0) {
+      timerSeconds = 0;
+      clearInterval(timerInterval);
+      if (!answered) timeUp();
+    }
+    updateTimerDisplay();
+  }, 100);
+}
+
+function updateTimerDisplay() {
+  const pct = (timerSeconds / 10) * 100;
+  const fill = document.getElementById('timer-fill');
+  fill.style.width = pct + '%';
+  fill.classList.remove('warning', 'danger');
+  if (timerSeconds <= 3) fill.classList.add('danger');
+  else if (timerSeconds <= 5) fill.classList.add('warning');
+  document.getElementById('timer-text').textContent = Math.ceil(timerSeconds) + 's';
+}
+
+function timeUp() {
+  answered = true;
+  totalCount++;
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback wrong show';
+  fb.innerHTML = '<div class="feedback-icon">⏰</div>时间到！<br><div class="correct-answer">正确答案：' + getCorrectAnswerDisplay() + '</div>';
+  disableOptions();
+  if (mode === 3) {
+    document.getElementById('fill-input').disabled = true;
+  }
+  document.getElementById('btn-next').style.display = 'inline-block';
+  const idx = questionQueue[questionIndex];
+  if (idx !== undefined) {
+    scheduleRetry(questionIndex, idx.wordIndex);
+  }
+  updateStats();
+}
+
+function getCorrectAnswerDisplay() {
+  const w = currentWord;
+  if (mode === 1) return w.c;
+  if (mode === 2) return w.e + (w.p ? ' ' + w.p : '');
+  if (mode === 3) return w.e;
+}
+
+// ========== RETRY LOGIC ==========
+function scheduleRetry(fromIndex, wordIndex) {
+  const retryPos = fromIndex + 5;
+  // Insert at retryPos (or append if beyond queue)
+  const insertIdx = Math.min(retryPos, questionQueue.length);
+  questionQueue.splice(insertIdx, 0, { wordIndex, retryOf: fromIndex });
+}
+
+// ========== QUESTION GENERATION ==========
+function nextQuestion() {
+  if (document.getElementById('quiz-page').style.display === 'none') return;
+  answered = false;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('btn-next').style.display = 'none';
+
+  questionIndex++;
+
+  // If queue is exhausted, add new random words
+  while (questionIndex >= questionQueue.length) {
+    const r = Math.floor(Math.random() * WORD_BANK.length);
+    questionQueue.push({ wordIndex: r });
+  }
+
+  const qi = questionQueue[questionIndex];
+  currentWord = WORD_BANK[qi.wordIndex];
+
+  renderQuestion();
+  startTimer();
+
+  // Update counter
+  document.getElementById('q-counter').textContent = '第 ' + (questionIndex + 1) + ' 题' +
+    (qi.retryOf !== undefined ? ' (复习)' : '');
+}
+
+function renderQuestion() {
+  document.getElementById('options-container').innerHTML = '';
+  document.getElementById('fill-container').style.display = 'none';
+  document.getElementById('question-word').style.display = 'none';
+  document.getElementById('question-chinese').style.display = 'none';
+  document.getElementById('fill-word').style.display = 'none';
+  document.getElementById('fill-hint').style.display = 'none';
+
+  if (mode === 1) {
+    // English → Chinese
+    document.getElementById('question-label').textContent = '选择正确的中文释义';
+    document.getElementById('question-word').style.display = 'block';
+    document.getElementById('question-word').textContent = currentWord.e;
+    document.getElementById('question-word').className = 'question-word fade-in';
+
+    const correctIdx = questionQueue[questionIndex].wordIndex;
+    const options = getRandomOptions(correctIdx, 4, 1);
+
+    options.forEach(optIdx => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      const w = WORD_BANK[optIdx];
+      btn.textContent = (w.p ? w.p + ' ' : '') + w.c;
+      btn.dataset.optionIndex = optIdx;
+      if (optIdx === correctIdx) correctOptionBtn = btn;
+      btn.onclick = () => checkAnswer(optIdx, correctIdx, btn);
+      document.getElementById('options-container').appendChild(btn);
+    });
+  } else if (mode === 2) {
+    // Chinese → English
+    document.getElementById('question-label').textContent = '选择正确的英文单词';
+    document.getElementById('question-chinese').style.display = 'block';
+    document.getElementById('question-chinese').textContent = currentWord.c;
+    document.getElementById('question-chinese').className = 'question-chinese fade-in';
+
+    const correctIdx = questionQueue[questionIndex].wordIndex;
+    const options = getRandomOptions(correctIdx, 4, 2);
+
+    options.forEach(optIdx => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      const w = WORD_BANK[optIdx];
+      btn.textContent = w.e + (w.p ? ' (' + w.p + ')' : '');
+      btn.dataset.optionIndex = optIdx;
+      if (optIdx === correctIdx) correctOptionBtn = btn;
+      btn.onclick = () => checkAnswer(optIdx, correctIdx, btn);
+      document.getElementById('options-container').appendChild(btn);
+    });
+  } else if (mode === 3) {
+    // Fill-in-the-blank
+    document.getElementById('question-label').textContent = '根据中文补全英文单词';
+    document.getElementById('question-chinese').style.display = 'block';
+    document.getElementById('question-chinese').textContent = currentWord.c;
+    document.getElementById('question-chinese').className = 'question-chinese fade-in';
+
+    const blankData = generateBlankWord(currentWord.e);
+    document.getElementById('fill-word').style.display = 'block';
+    document.getElementById('fill-word').textContent = blankData.display;
+    document.getElementById('fill-word').className = 'fill-word fade-in';
+    // Store blank data
+    document.getElementById('fill-word').dataset.answer = blankData.answer;
+    document.getElementById('fill-word').dataset.blanks = JSON.stringify(blankData.blanks);
+
+    document.getElementById('fill-container').style.display = 'block';
+    document.getElementById('fill-input').value = '';
+    document.getElementById('fill-input').focus();
+    document.getElementById('fill-hint').style.display = 'block';
+    document.getElementById('fill-hint').textContent = '提示：共 ' + currentWord.e.length + ' 个字母，挖去 ' + blankData.blanks.length + ' 个';
+
+    // Allow Enter key to submit
+    document.getElementById('fill-input').onkeydown = (e) => {
+      if (e.key === 'Enter') checkFillAnswer();
+    };
+  }
+}
+
+// ========== ANSWER CHECKING ==========
+function checkAnswer(selected, correct, btn) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  totalCount++;
+
+  const allBtns = document.querySelectorAll('.option-btn');
+  disableOptions();
+
+  if (selected === correct) {
+    // CORRECT
+    correctCount++;
+    btn.classList.add('correct');
+    document.getElementById('feedback').className = 'feedback correct show';
+    document.getElementById('feedback').innerHTML = '<div class="feedback-icon">✓</div>回答正确！';
+    // Auto-advance after 0.8s
+    clearTimeout(autoAdvanceTimeout);
+    autoAdvanceTimeout = setTimeout(() => {
+      if (document.getElementById('quiz-page').style.display !== 'none') {
+        nextQuestion();
+      }
+    }, 800);
+  } else {
+    // WRONG
+    btn.classList.add('wrong');
+    if (correctOptionBtn) correctOptionBtn.classList.add('correct');
+
+    const correctWord = WORD_BANK[correct];
+    document.getElementById('feedback').className = 'feedback wrong show';
+    document.getElementById('feedback').innerHTML =
+      '<div class="feedback-icon">✗</div>回答错误！<br><div class="correct-answer">正确答案：' +
+      getCorrectAnswerDisplay() + '</div>';
+    document.getElementById('btn-next').style.display = 'inline-block';
+
+    // Schedule i+5 retry
+    scheduleRetry(questionIndex, questionQueue[questionIndex].wordIndex);
+  }
+
+  updateStats();
+}
+
+function checkFillAnswer() {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  totalCount++;
+
+  const answer = document.getElementById('fill-word').dataset.answer;
+  const userInput = document.getElementById('fill-input').value.trim();
+  const inputEl = document.getElementById('fill-input');
+
+  if (userInput.toLowerCase() === answer.toLowerCase()) {
+    // CORRECT
+    correctCount++;
+    inputEl.style.borderColor = '#4caf84';
+    document.getElementById('feedback').className = 'feedback correct show';
+    document.getElementById('feedback').innerHTML = '<div class="feedback-icon">✓</div>回答正确！';
+    clearTimeout(autoAdvanceTimeout);
+    autoAdvanceTimeout = setTimeout(() => {
+      if (document.getElementById('quiz-page').style.display !== 'none') {
+        nextQuestion();
+      }
+    }, 800);
+  } else {
+    // WRONG
+    inputEl.style.borderColor = '#e05050';
+    document.getElementById('feedback').className = 'feedback wrong show';
+    document.getElementById('feedback').innerHTML =
+      '<div class="feedback-icon">✗</div>回答错误！<br><div class="correct-answer">正确答案：' + answer + '</div>';
+    document.getElementById('btn-next').style.display = 'inline-block';
+    scheduleRetry(questionIndex, questionQueue[questionIndex].wordIndex);
+  }
+
+  updateStats();
+  document.getElementById('fill-input').disabled = true;
+}
+
+function disableOptions() {
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+}
+
+// ========== STATS ==========
+function updateStats() {
+  const acc = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+  document.getElementById('stat-accuracy').textContent = '正确率: ' + acc + '%';
+  document.getElementById('stat-correct').textContent = '正确: ' + correctCount;
+  document.getElementById('stat-total').textContent = '总题: ' + totalCount;
+}
+
+// ========== NAVIGATION ==========
+function startMode(m) {
+  mode = m;
+  // Reset all state
+  correctCount = 0;
+  totalCount = 0;
+  questionIndex = -1;
+  answered = false;
+  questionQueue = [];
+  clearInterval(timerInterval);
+
+  // Seed queue with 5 initial random words
+  while (questionQueue.length < 5) {
+    const r = Math.floor(Math.random() * WORD_BANK.length);
+    questionQueue.push({ wordIndex: r });
+  }
+
+  updateStats();
+  document.getElementById('main-page').style.display = 'none';
+  document.getElementById('quiz-page').style.display = 'block';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('btn-next').style.display = 'none';
+
+  nextQuestion();
+}
+
+function goToMain() {
+  clearInterval(timerInterval);
+  clearTimeout(autoAdvanceTimeout);
+  answered = true;
+  document.getElementById('main-page').style.display = 'block';
+  document.getElementById('quiz-page').style.display = 'none';
+}
+
+// ========== KEYBOARD SHORTCUTS ==========
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('quiz-page').style.display === 'none') return;
+
+  if (mode === 1 || mode === 2) {
+    const keys = ['1', '2', '3', '4'];
+    const idx = keys.indexOf(e.key);
+    if (idx >= 0 && !answered) {
+      const btns = document.querySelectorAll('.option-btn');
+      if (btns[idx]) btns[idx].click();
+    }
+  }
+
+  if (e.key === 'Enter' && answered) {
+    if (document.getElementById('btn-next').style.display !== 'none') {
+      nextQuestion();
+    }
+  }
+
+  if (e.key === 'Escape') {
+    goToMain();
+  }
+});
+</script>
+</body>
+</html>
