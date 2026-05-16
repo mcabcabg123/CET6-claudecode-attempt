@@ -1,0 +1,12 @@
+{
+  "name": "cet6-quiz",
+  "version": "1.0.0",
+  "description": "CET-6 词汇测试 with global stats",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

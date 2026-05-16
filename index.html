@@ -114,6 +114,17 @@ h1 { text-align: center; font-size: 2em; margin-bottom: 10px; color: #fff; }
 .mode-btn .icon { font-size: 1.8em; display: block; margin-bottom: 8px; }
 .mode-btn .desc { font-size: 0.8em; color: #89a4c7; margin-top: 5px; }
 
+/* Global stats on main page */
+.global-stats {
+  display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.global-stat-item {
+  background: rgba(76,175,132,0.12); padding: 8px 18px;
+  border-radius: 20px; font-size: 0.85em; color: #a0c4d0;
+}
+.global-stat-item strong { color: #4caf84; margin-left: 4px; }
+
 /* Question counter */
 .q-counter { text-align: center; color: #89a4c7; font-size: 0.85em; margin-bottom: 20px; }
 
@@ -145,6 +156,11 @@ h1 { text-align: center; font-size: 2em; margin-bottom: 10px; color: #fff; }
   <div id="main-page">
     <h1>CET-6 词汇测试</h1>
     <p class="subtitle">大学英语六级 · 全表含音标 · 5523词</p>
+    <div class="global-stats" id="global-stats">
+      <span class="global-stat-item">今日访问: <strong id="g-page-views">-</strong></span>
+      <span class="global-stat-item">今日答题: <strong id="g-total-answers">-</strong></span>
+      <span class="global-stat-item">全员正确率: <strong id="g-accuracy">-</strong></span>
+    </div>
     <div class="mode-buttons">
       <button class="mode-btn" onclick="startMode(1)">
         <span class="icon">A→中</span>
@@ -283,6 +299,7 @@ function updateTimerDisplay() {
 function timeUp() {
   answered = true;
   totalCount++;
+  recordAnswer(false);
   const fb = document.getElementById('feedback');
   fb.className = 'feedback wrong show';
   fb.innerHTML = '<div class="feedback-icon">⏰</div>时间到！<br><div class="correct-answer">正确答案：' + getCorrectAnswerDisplay() + '</div>';
@@ -485,6 +502,7 @@ function checkAnswer(selected, correct, btn) {
   if (selected === correct) {
     // CORRECT
     correctCount++;
+    recordAnswer(true);
     btn.classList.add('correct');
     document.getElementById('feedback').className = 'feedback correct show';
     document.getElementById('feedback').innerHTML = '<div class="feedback-icon">✓</div>回答正确！';
@@ -497,6 +515,7 @@ function checkAnswer(selected, correct, btn) {
     }, 800);
   } else {
     // WRONG
+    recordAnswer(false);
     btn.classList.add('wrong');
     if (correctOptionBtn) correctOptionBtn.classList.add('correct');
 
@@ -542,6 +561,7 @@ function checkFillAnswer() {
 
   if (allCorrect) {
     correctCount++;
+    recordAnswer(true);
     document.getElementById('feedback').className = 'feedback correct show';
     document.getElementById('feedback').innerHTML = '<div class="feedback-icon">✓</div>回答正确！';
     clearTimeout(autoAdvanceTimeout);
@@ -551,6 +571,7 @@ function checkFillAnswer() {
       }
     }, 800);
   } else {
+    recordAnswer(false);
     document.getElementById('feedback').className = 'feedback wrong show';
     document.getElementById('feedback').innerHTML =
       '<div class="feedback-icon">✗</div>回答错误！<br><div class="correct-answer">正确答案：' + answer + '</div>';
@@ -571,6 +592,38 @@ function updateStats() {
   document.getElementById('stat-accuracy').textContent = '正确率: ' + acc + '%';
   document.getElementById('stat-correct').textContent = '正确: ' + correctCount;
   document.getElementById('stat-total').textContent = '总题: ' + totalCount;
+}
+
+// ========== GLOBAL STATS (server-side) ==========
+function updateGlobalStatsDisplay(data) {
+  document.getElementById('g-page-views').textContent = data.page_views;
+  document.getElementById('g-total-answers').textContent = data.total_answers;
+  document.getElementById('g-accuracy').textContent = data.accuracy + '%';
+}
+
+function recordVisit() {
+  fetch('/api/visit', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => updateGlobalStatsDisplay(data))
+    .catch(() => {});
+}
+
+function recordAnswer(correct) {
+  fetch('/api/answer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ correct })
+  })
+    .then(r => r.json())
+    .then(data => updateGlobalStatsDisplay(data))
+    .catch(() => {});
+}
+
+function refreshGlobalStats() {
+  fetch('/api/stats')
+    .then(r => r.json())
+    .then(data => updateGlobalStatsDisplay(data))
+    .catch(() => {});
 }
 
 // ========== NAVIGATION ==========
@@ -630,6 +683,10 @@ document.addEventListener('keydown', (e) => {
     goToMain();
   }
 });
+
+// ========== INIT ==========
+recordVisit();
+setInterval(refreshGlobalStats, 30000);
 </script>
 </body>
 </html>
