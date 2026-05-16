@@ -59,13 +59,26 @@ h1 { text-align: center; font-size: 2em; margin-bottom: 10px; color: #fff; }
 .option-btn.wrong { background: rgba(224,80,80,0.3); border-color: #e05050; }
 
 /* Fill-in-the-blank */
-.fill-input {
-  width: 100%; padding: 14px; font-size: 1.5em; text-align: center;
-  border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08);
-  color: #fff; border-radius: 12px; letter-spacing: 4px; outline: none;
+.fill-word-row {
+  display: flex; justify-content: center; align-items: center;
+  gap: 6px; margin: 20px 0; flex-wrap: wrap;
 }
-.fill-input:focus { border-color: #4caf84; }
-.fill-word { font-size: 2.2em; text-align: center; letter-spacing: 5px; margin: 15px 0 20px; color: #fff; font-weight: 700; }
+.fill-letter {
+  width: 44px; height: 52px; text-align: center;
+  font-size: 1.8em; font-weight: 700; color: #fff;
+  line-height: 52px;
+}
+.fill-blank-input {
+  width: 44px; height: 52px; text-align: center;
+  font-size: 1.8em; font-weight: 700;
+  border: 2px solid rgba(76,175,132,0.6);
+  background: rgba(76,175,132,0.1);
+  color: #fff; border-radius: 8px; outline: none;
+  caret-color: #4caf84;
+}
+.fill-blank-input:focus { border-color: #4caf84; background: rgba(76,175,132,0.2); }
+.fill-blank-input.correct-blank { border-color: #4caf84; background: rgba(76,175,132,0.3); }
+.fill-blank-input.wrong-blank { border-color: #e05050; background: rgba(224,80,80,0.3); }
 .hint-text { text-align: center; color: #89a4c7; font-size: 0.85em; margin-top: 8px; }
 
 /* Feedback */
@@ -165,12 +178,11 @@ h1 { text-align: center; font-size: 2em; margin-bottom: 10px; color: #fff; }
     <div class="question-label" id="question-label"></div>
     <div class="question-word fade-in" id="question-word" style="display:none;"></div>
     <div class="question-chinese fade-in" id="question-chinese" style="display:none;"></div>
-    <div class="fill-word fade-in" id="fill-word" style="display:none;"></div>
+    <div class="fill-word-row fade-in" id="fill-word-row" style="display:none;"></div>
     <div class="hint-text" id="fill-hint" style="display:none;"></div>
 
     <div class="options" id="options-container"></div>
     <div id="fill-container" style="display:none;">
-      <input type="text" class="fill-input" id="fill-input" placeholder="输入完整单词..." autocomplete="off">
       <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="checkFillAnswer()">确认</button>
     </div>
 
@@ -184,7 +196,7 @@ h1 { text-align: center; font-size: 2em; margin-bottom: 10px; color: #fff; }
 
 </div>
 
-<script src="word_bank.js"></script>
+<script src="word_bank.js?v=3"></script>
 <script>
 // ========== STATE ==========
 let mode = 0;
@@ -224,36 +236,22 @@ function getRandomOptions(correctIdx, count, mode) {
 }
 
 function generateBlankWord(word) {
-  // Blank out ~40% of letters (min 2), never blank first letter for easier context
+  // Blank out ~40% of letters (min 2), never blank first letter
   const len = word.length;
   if (len <= 3) {
-    // For short words, blank 1 letter
     const pos = 1 + Math.floor(Math.random() * (len - 1));
     const blanked = word.split('');
     blanked[pos] = '_';
     return { display: blanked.join(''), blanks: [pos], answer: word };
   }
-
   const blankCount = Math.max(2, Math.floor(len * 0.4));
-  const positions = [];
   const available = [];
-  for (let i = 1; i < len; i++) { // Start from 1 to keep first letter
-    // Don't blank hyphens or spaces
-    if (word[i] !== '-' && word[i] !== ' ') {
-      available.push(i);
-    }
+  for (let i = 1; i < len; i++) {
+    if (word[i] !== '-' && word[i] !== ' ') available.push(i);
   }
-
-  // Shuffle available positions and pick blankCount
   const shuffled = shuffle(available);
   const chosen = shuffled.slice(0, Math.min(blankCount, available.length)).sort((a, b) => a - b);
-
-  const display = word.split('');
-  for (const pos of chosen) {
-    display[pos] = '_';
-  }
-
-  return { display: display.join(''), blanks: chosen, answer: word };
+  return { letters: word.split(''), blanks: chosen, answer: word };
 }
 
 // ========== TIMER ==========
@@ -290,7 +288,7 @@ function timeUp() {
   fb.innerHTML = '<div class="feedback-icon">⏰</div>时间到！<br><div class="correct-answer">正确答案：' + getCorrectAnswerDisplay() + '</div>';
   disableOptions();
   if (mode === 3) {
-    document.getElementById('fill-input').disabled = true;
+    document.querySelectorAll('.fill-blank-input').forEach(inp => inp.disabled = true);
   }
   document.getElementById('btn-next').style.display = 'inline-block';
   const idx = questionQueue[questionIndex];
@@ -302,8 +300,8 @@ function timeUp() {
 
 function getCorrectAnswerDisplay() {
   const w = currentWord;
-  if (mode === 1) return w.c;
-  if (mode === 2) return w.e + (w.p ? ' ' + w.p : '');
+  if (mode === 1) return w.c;  // c already includes POS
+  if (mode === 2) return w.e;
   if (mode === 3) return w.e;
 }
 
@@ -346,7 +344,7 @@ function renderQuestion() {
   document.getElementById('fill-container').style.display = 'none';
   document.getElementById('question-word').style.display = 'none';
   document.getElementById('question-chinese').style.display = 'none';
-  document.getElementById('fill-word').style.display = 'none';
+  document.getElementById('fill-word-row').style.display = 'none';
   document.getElementById('fill-hint').style.display = 'none';
 
   if (mode === 1) {
@@ -363,7 +361,8 @@ function renderQuestion() {
       const btn = document.createElement('button');
       btn.className = 'option-btn';
       const w = WORD_BANK[optIdx];
-      btn.textContent = (w.p ? w.p + ' ' : '') + w.c;
+      // c already includes leading POS, no need to add w.p again
+      btn.textContent = w.c;
       btn.dataset.optionIndex = optIdx;
       if (optIdx === correctIdx) correctOptionBtn = btn;
       btn.onclick = () => checkAnswer(optIdx, correctIdx, btn);
@@ -383,37 +382,93 @@ function renderQuestion() {
       const btn = document.createElement('button');
       btn.className = 'option-btn';
       const w = WORD_BANK[optIdx];
-      btn.textContent = w.e + (w.p ? ' (' + w.p + ')' : '');
+      btn.textContent = w.e;
       btn.dataset.optionIndex = optIdx;
       if (optIdx === correctIdx) correctOptionBtn = btn;
       btn.onclick = () => checkAnswer(optIdx, correctIdx, btn);
       document.getElementById('options-container').appendChild(btn);
     });
   } else if (mode === 3) {
-    // Fill-in-the-blank
+    // Fill-in-the-blank with individual letter inputs
     document.getElementById('question-label').textContent = '根据中文补全英文单词';
     document.getElementById('question-chinese').style.display = 'block';
     document.getElementById('question-chinese').textContent = currentWord.c;
     document.getElementById('question-chinese').className = 'question-chinese fade-in';
 
     const blankData = generateBlankWord(currentWord.e);
-    document.getElementById('fill-word').style.display = 'block';
-    document.getElementById('fill-word').textContent = blankData.display;
-    document.getElementById('fill-word').className = 'fill-word fade-in';
-    // Store blank data
-    document.getElementById('fill-word').dataset.answer = blankData.answer;
-    document.getElementById('fill-word').dataset.blanks = JSON.stringify(blankData.blanks);
+    const row = document.getElementById('fill-word-row');
+    row.style.display = 'flex';
+    row.className = 'fill-word-row fade-in';
+    row.innerHTML = '';
+
+    // Store answer data on the row element
+    row.dataset.answer = blankData.answer;
+    row.dataset.blanks = JSON.stringify(blankData.blanks);
+
+    // Build letter-by-letter display with input boxes for blanks
+    blankData.letters.forEach((letter, idx) => {
+      if (blankData.blanks.includes(idx)) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 1;
+        input.className = 'fill-blank-input';
+        input.dataset.letterIndex = idx;
+        input.dataset.expected = letter;
+        input.autocomplete = 'off';
+        input.autocapitalize = 'off';
+        input.spellcheck = false;
+
+        // Keyboard navigation
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            checkFillAnswer();
+            return;
+          }
+          if (e.key === 'Backspace' && !this.value) {
+            // Move to previous blank
+            const allInputs = row.querySelectorAll('.fill-blank-input');
+            const curIdx = Array.from(allInputs).indexOf(this);
+            if (curIdx > 0) {
+              allInputs[curIdx - 1].focus();
+              allInputs[curIdx - 1].select();
+            }
+            e.preventDefault();
+            return;
+          }
+        });
+
+        input.addEventListener('input', function(e) {
+          // Only accept letters
+          const val = this.value.replace(/[^a-zA-Z]/g, '');
+          this.value = val.slice(-1);
+          if (this.value) {
+            // Auto-advance to next blank
+            const allInputs = row.querySelectorAll('.fill-blank-input');
+            const curIdx = Array.from(allInputs).indexOf(this);
+            if (curIdx < allInputs.length - 1) {
+              allInputs[curIdx + 1].focus();
+              allInputs[curIdx + 1].select();
+            }
+          }
+        });
+
+        row.appendChild(input);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'fill-letter';
+        span.textContent = letter;
+        row.appendChild(span);
+      }
+    });
 
     document.getElementById('fill-container').style.display = 'block';
-    document.getElementById('fill-input').value = '';
-    document.getElementById('fill-input').focus();
     document.getElementById('fill-hint').style.display = 'block';
-    document.getElementById('fill-hint').textContent = '提示：共 ' + currentWord.e.length + ' 个字母，挖去 ' + blankData.blanks.length + ' 个';
+    document.getElementById('fill-hint').textContent =
+      '提示：共 ' + currentWord.e.length + ' 个字母，挖去 ' + blankData.blanks.length + ' 个';
 
-    // Allow Enter key to submit
-    document.getElementById('fill-input').onkeydown = (e) => {
-      if (e.key === 'Enter') checkFillAnswer();
-    };
+    // Auto-focus first blank
+    const firstInput = row.querySelector('.fill-blank-input');
+    if (firstInput) setTimeout(() => firstInput.focus(), 100);
   }
 }
 
@@ -465,14 +520,28 @@ function checkFillAnswer() {
   clearInterval(timerInterval);
   totalCount++;
 
-  const answer = document.getElementById('fill-word').dataset.answer;
-  const userInput = document.getElementById('fill-input').value.trim();
-  const inputEl = document.getElementById('fill-input');
+  const row = document.getElementById('fill-word-row');
+  const answer = row.dataset.answer;
+  const allInputs = row.querySelectorAll('.fill-blank-input');
 
-  if (userInput.toLowerCase() === answer.toLowerCase()) {
-    // CORRECT
+  // Build user's answer and check each blank
+  let userAnswer = '';
+  let allCorrect = true;
+  allInputs.forEach(inp => {
+    const val = inp.value.toLowerCase();
+    const expected = inp.dataset.expected.toLowerCase();
+    userAnswer += val || '_';
+    if (val === expected) {
+      inp.classList.add('correct-blank');
+    } else {
+      inp.classList.add('wrong-blank');
+      allCorrect = false;
+    }
+    inp.disabled = true;
+  });
+
+  if (allCorrect) {
     correctCount++;
-    inputEl.style.borderColor = '#4caf84';
     document.getElementById('feedback').className = 'feedback correct show';
     document.getElementById('feedback').innerHTML = '<div class="feedback-icon">✓</div>回答正确！';
     clearTimeout(autoAdvanceTimeout);
@@ -482,8 +551,6 @@ function checkFillAnswer() {
       }
     }, 800);
   } else {
-    // WRONG
-    inputEl.style.borderColor = '#e05050';
     document.getElementById('feedback').className = 'feedback wrong show';
     document.getElementById('feedback').innerHTML =
       '<div class="feedback-icon">✗</div>回答错误！<br><div class="correct-answer">正确答案：' + answer + '</div>';
@@ -492,7 +559,6 @@ function checkFillAnswer() {
   }
 
   updateStats();
-  document.getElementById('fill-input').disabled = true;
 }
 
 function disableOptions() {
